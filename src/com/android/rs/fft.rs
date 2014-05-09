@@ -6,7 +6,9 @@
 uint32_t t = 0;
 uint32_t finalFFT = 0;
 void root(const float2 *in, float2 *out, const void *usrData, uint32_t i){
+  // number of elements
   uint32_t p = *(uint32_t *)usrData;
+  
   uint32_t k = i&(p-1);            // index in input sequence, in 0..P-1
   uint32_t j = ((i-k)<<1) + k;     // output index
   float alpha = -M_PI*(float)k/(float)p;
@@ -15,8 +17,9 @@ void root(const float2 *in, float2 *out, const void *usrData, uint32_t i){
   float2 u1 = twiddle(in[t],1,alpha);
 
   // In-place DFT-2
-  DFT2(u0,u1);
+  DFT2(u0,u1); // u1 := u0-u1, u0 := u0+u1 .... float2 tmp = a - b; a += b; b = tmp; 
   out += j-i;
+  
   // Write output
   out[0] = u0;
   out[p] = u1;
@@ -24,6 +27,8 @@ void root(const float2 *in, float2 *out, const void *usrData, uint32_t i){
 
 void runRestricted(rs_script fftScript, rs_allocation in_alloc, rs_allocation out_alloc) {
 	 uint32_t numElements = rsAllocationGetDimX(in_alloc);
+	 
+	 //
 	 t = numElements / 2;
      struct rs_script_call restrict_for;
      restrict_for.strategy = RS_FOR_EACH_STRATEGY_DONT_CARE;
